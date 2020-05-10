@@ -1,0 +1,312 @@
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-157519291-1');
+    </script>
+
+    <title>CS194 Project @</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <style>
+      img.resize {
+        width:625px;
+        height:125px;
+      }
+      .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 80%;
+      }
+      .pd {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
+      }
+      .fade-container {
+        position: relative;
+      }
+
+      .fade-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      
+      .fade-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .5s ease;
+        background-color: rgba(177, 250, 250, 0.904);
+      }
+      
+      .fade-container:hover .fade-overlay {
+        opacity: 1;
+      }
+      
+      .fade-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+    </style>
+
+  </head>
+  <body class="w-100">
+  <!-- Title -->
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Deep Learning and Image Processing</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>McClain Thiel, CS194 Spring 2020</h4>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 1</h1>
+        <p>
+          This part of the project is a classic image classification problem. The goal is to take an image from the MNIST
+          fasion database and classify it as one of the following categories:
+          T-shirt/top,
+          Trouser/pants,
+          Pullover shirt,
+          Dress,
+          Coat,
+          Sandal,
+          Shirt,
+          Sneaker,
+          Bag,
+          Ankle boot.
+          This is a well known dataset and is pretty easy to work with. All images are 28x28 in dimensions and gray scale.
+        </p>
+
+        <img class="center" src="assets/imgs/fmnist.jpg" alt="me annotaed">
+
+
+        <p>
+          My network was a simple convolution network build in pytorch. It's pretty small
+          and light weight for a convolution network but because the images are so small, the net doesn't really
+          need an extremely high level of complexity to capture and approximate the data. The architecture was:
+        </p>
+
+        <ul>
+          <li>Conv2d(1, 16, kernel_size = 5 , padding = 2)</li>
+          <li>BatchNorm2d(16)</li>
+          <li>ReLu</li>
+          <li>MaxPool2d(2)</li>
+          <li>Conv2d(16, 32, kernel_size = 5, padding=2)</li>
+          <li>BatchNorm2d(32)</li>
+          <li>ReLu</li>
+          <li>MaxPool2d(2)</li>
+          <li>Linear(7*7*32, 10)</li>
+        </ul>
+
+        <p>This is a pretty standard set up for this kind of problem. It's effectively 2 convolution blocks with some
+        extra functionality (normalization, activation and downscaling) followed by a fully connected layer which
+        moves from the altered dimensions of the net to the number of classes we want to classify. </p>
+
+        <p>
+          After this I built some dataloaders and compiled the model. I used (categorical) cross entropy loss and the
+          Adam optimizer with a learning rate of 0.01. I still think this is a little too high but I guess for a lightweight
+          net it works fine. Using batch size of 128 and training for 10 epochs. After writing a mess of a training loop
+          we get the following loss and accuracy graphs.
+
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/loss_plot.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/acc_plot.jpg">
+          </div>
+        </div>
+         <p>
+           The training cure on both graphs is super pretty, but the validation curve is a bit jumpy. This could be random,
+           I think the batch size for the test data was smaller, but it could also be the result of the high learning rate.
+           Ether way, if I trained this for longer I'm sure it would flatten out a but but I'm training on a macbook without
+           a GPU and i just don't have that much time.
+         </p>
+
+        <h3>
+          Class Accuracies
+        </h3>
+        <p>
+          We can find out more about how our network functions by looking at things it got wrong vs things it correctly
+          classified. Sometimes the errors the network makes are understandable. Often time it all looks like nonsense
+          to a human because networks tend to prioritize texture over other features but in some cases, such as this one,
+          the mistakes are similar to that which a human would make, and we can empathize somewhat. The first thing I did
+          was figure out the class by class accuracies of the test set.
+        </p>
+        <img class="pd" src="assets/imgs/class_acc.jpg" alt="midway">
+        <p>
+          As you can see, the network had a pretty hard time classifying the t-shirts but almost never misclassified a bag.
+          The next thing we can do is to build a confusion matrix which shows not only what was correct or incorrect but
+          also in what way. This tells us, if something was misclassified, what our network thought it was.
+        </p>
+        <img class="center" src="assets/imgs/Confusion_matrix.png" alt="midway">
+        <p>
+          This actually tells us a lot about the mistakes the network made. Obviously, it got most of the images correct,
+          but when it made errors we can see that it was usually something that looks similar. We see that t-shirts are
+          often misclassified, and when they are our network usually thinks they are normal shirts or coats, which makes
+          a lot of sense.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/t1.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/shirt.jpg">
+          </div>
+        </div>
+        <p>
+          For low resolution images, you can kind of squint and see what it's thinking. They have similar colors and
+          the same general shape. For some t-shirts, and shirts, they may be even more similar. Contrast this with
+          a pair that the network never got wrong.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/bag1.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/t2.jpg">
+          </div>
+        </div>
+        <p>
+          The bags are a unique shape and don't really look like anything else in the dataset. The network rarely makes
+          mistakes classifying bags and boots.
+        </p>
+        <h3>
+          Visualizing layer activations
+        </h3>
+
+        <p>
+          In some networks, we can see exactly what the network is thinking by using gradient ascent (opposite of the
+          normal optimization function) to create saliently maps. Saliently maps show exactly what causes the network to
+          activate at a specific node. This technique can be very valuable when trying to understand or troubleshoot
+          convolutional networks. At their best (and with a guided back propagation), they can look almost exactly like
+          the images you would expect.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/cat.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/filter_cat.jpg">
+          </div>
+        </div>
+        <p>
+          At the first few layers of the network, they tend to just look like simple edges and circles and stuff like that,
+          but in the deeper layers, they are clearly human recognizable.
+        </p>
+        <img class="center" src="assets/imgs/examples.jpg" alt="midway">
+        <p>
+          Unfortunately, mine do not look like that. There are several reasons for this. One is that the images are low resolution,
+          good for fast training, bad for visualization. Secondly, my network is pretty shallow. With only 2 real
+          convolutional layer, the network doesn't really learn complex shapes well. Finally, I used a large step size and
+          some max pooling. This causes some harsh down sampling which means that my filters are only 5x5 in the final layer.
+          But what can ya do?
+        </p>
+        <img class="center" src="assets/imgs/layer_vis.jpg" alt="midway">
+        <p>
+          If you REALLY squint you can maybe sort of see how those might look something like the fasion dataset...?
+        </p>
+      </div>
+    </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 2: Instance Segmentation</h1>
+        <p>
+          This part of the project was much harder. The goal is to take an image of a building and then color code
+          each part of it so that the color corresponds to a specific architectural feature. Green means pillar, blue means
+          facade, orange means window, red means balcony, and black means other. This is an instance segmentation problem
+          in which each architectural feature must be color coded according to its class.
+        </p>
+        <p>
+        As you can sort of see above, windows are orange, terraces are black, pillars are green, balconies are red and
+          everything else is blue. I first tired to build a normal FCN (fully convolutional network) which is pretty
+          much as it sounds. It up and down samples the image using only convolution and deconvolution (effectively upsampling).
+          To go with this, I also wrote a custom loss function.
+
+        </p>
+        <script src="https://gist.github.com/McClain-Thiel/943a6045b41aa2ed877a15554a3304a1.js"></script>
+        <p>
+        I used this loss function for a while but eventually just went back to the built-in crossentorpy loss function.
+          For the actual design of the network, I shifted from my original architecture above to a smaller and slightly
+          more complex solution. I implemented a somewhat simplified version of U-net. My actual architecture doesn't
+          really describe what makes this net unique. The architecture is just a normal convolutionl structure with some
+          additional batch norms and pooling
+        </p>
+
+        <img class="center" src="assets/imgs/u-netjpg.jpg" alt="originals">
+
+        <p>
+          The interesting part is the skip connections. The arrows represent this. What this technically means is concatenating
+          whatever is at the current layer and the input from the arrow then progressing through the layers. This allows
+          the network to associate higher level features with lower level features. So for example, one of the skip connections
+          goes from the first convolution layer to one of the deep layers. This allows the connection between general
+          structure like the windows and pillars, to whatever the network has learned in the deeper layers.
+
+        </p>
+        <p>
+          I trained this model on an Azure VM with a big GPU because this would take roughly a century to train on my
+          laptop and then downloaded the weights file. I've displayed my average precision scores below, but if you
+          want to replicate this, you need the weight files, and you can just run the main function with eval_pretrained().
+        </p>
+
+        <img class="center" src="assets/imgs/ap_scores.png" alt="transformed">
+        <p>
+          I've also included some examples of what my model outputs when trained. As you can see from these pictures,
+          it works pretty well but does make some mistakes. For example, it often mistakes the wall between windows as a
+          pillar which is understandable.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/x194.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/y194.jpg">
+          </div>
+        </div>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/x197.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/y197.jpg">
+          </div>
+        </div>
+        <h2>
+          References
+        </h2>
+        <p>
+          Yosinski et al, Understanding Neural Networks Through Deep Visualization (ICML 2015) (example visualizations above)
+        </p>
+
+      </div>
+    </div>
+
+    </div>
+
+  </div>
+
+</html>

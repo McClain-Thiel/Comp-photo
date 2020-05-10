@@ -1,0 +1,7 @@
+opencv-python==3.4.6.27
+tensorflow==2.1.0
+pandas
+importlib-metadata
+imutils
+dlib
+numpy

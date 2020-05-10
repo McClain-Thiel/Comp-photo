@@ -1,0 +1,237 @@
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-157519291-1');
+    </script>
+
+    <title>CS194 Project @</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <style>
+      img.resize {
+        width:625px;
+        height:125px;
+      }
+      .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
+      }
+      .fade-container {
+        position: relative;
+      }
+
+      .fade-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      
+      .fade-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .5s ease;
+        background-color: rgba(177, 250, 250, 0.904);
+      }
+      
+      .fade-container:hover .fade-overlay {
+        opacity: 1;
+      }
+      
+      .fade-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+    </style>
+
+  </head>
+  <body class="w-100">
+  <!-- Title -->
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Face Morphing</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>McClain Thiel, CS194 Spring 2020</h4>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 1</h1>
+        <p>
+          Part 1 of this project involves morphing your face to someone else's. For this, I chose my first computer science
+          professor at Berkeley, John Denero. These are the two pictures I started with. My linkedin head shot and a random
+          picture of professor Denero I found on line (don't tell him).
+        </p>
+
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/me_resized%20copy.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/john%20copy.jpg">
+          </div>
+        </div>
+
+        <p>
+          The first step of this process is defining correspondences, or points that are analogous in the two pictures.
+          For example, my eye to his eye and my nose to his nose ect. I wrote a script that allowed me to do this manually.
+          Very simply, I just went back and forth clicked points that were similar. Example below:
+        </p>
+
+        <img class="center" src="assets/imgs/me_annotated.jpg" alt="me annotaed">
+
+        <p>
+          Once the points are defined, we use the Delaunay algorithm to generate a series of triangles that mask the face.
+          We average the location of all the points and run the algorithm. The algorithm, by the way, just connects series
+          of 3 points while trying to maximize the angle of the most narrow angle. In effect, trying to make all the triangles
+          as close to equilateral as possible.
+
+        </p>
+        <img class="center" src="assets/imgs/me_triangulated.jpg" alt="me triangle">
+
+         <p>
+           The idea of the merge is to silmotanously change the shape and the color of the images. The shape is
+           changed by finding corrosponding triangles between the original image and the average we just calculated,
+           then using an affine transformation to subtly change from the original shape to the new shape. An affine
+           is defined below:
+         </p>
+        <blockquote cite="https://en.wikipedia.org/wiki/Affine_transformation">
+        In geometry, an affine transformation, or an affinity (from the Latin, affinis, "connected with") is an
+        automorphism of an affine space. More specifically, it is a function mapping an affine space onto itself that
+        preserves the dimension of any affine subspaces (meaning that it sends points to points, lines to lines, planes
+        to planes, and so on) and also preserves the ratio of the lengths of parallel line segments. Consequently, sets
+        of parallel affine subspaces remain parallel after an affine transformation. An affine transformation does not
+        necessarily preserve angles between lines or distances between points, though it does preserve ratios of
+        distances between points lying on a straight line.
+        </blockquote>
+
+        <p>
+          Once we transform all of this we can make this midway picture.
+        </p>
+        <img class="center" src="assets/imgs/midway.jpg" alt="midway">
+        <p>
+          Now, all that's left to do is modify all the steps above by an alpha coefficient which controls what percent
+          of transition the image is through. We generate a bunch of images and string them together in a gif.
+        </p>
+        <img class="center" src="assets/imgs/movie.gif" alt="midway">
+
+
+
+      </div>
+    </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 2: Averaging Faces</h1>
+        <p>
+          Basically very similar to part one. All the processes are the same but now we are just going to get the midway
+          point of many images and then stack them. In terms of changing the shape, we just find the euclidean mean of
+          each corresponding point. Once the average is calculated, I forced all of the original images into the new shape.
+        </p>
+        <p>
+          Originals
+        </p>
+        <img class="center" src="assets/imgs/pre_transformed.jpg" alt="originals">
+        <p>
+          Transformed
+        </p>
+        <img class="center" src="assets/imgs/transformed.jpg" alt="transformed">
+
+        <p>
+        After that, all I had to do was stack the images and average the color. Because, I had to manually parse the data
+          set for people of similar characteristics (in this case, white men with little to no facial hair, no glasses and
+          who are framed in the picture such that their chin touches the bottom), the sample size is rather small and so the
+          results aren't as good as they might be.
+        </p>
+        <img class="center" src="assets/imgs/pop_avg.jpg" alt="transformed">
+        <p>
+        The next part after this was forcing my face into the shape of the average. This is just the same process as
+          described in part one of the project. The first trial went poorly and I ended up with an atrocity, but once
+          I curated the dataset to contain only people that look somewhat similar to me, we got better results.
+        </p>
+
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/me_bad_affine.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/better_affine.jpg">
+          </div>
+        </div>
+        <p>
+          Again, not great but better. There were two problems with this. One was that the dataset was small. Unfortunate,
+          but should be fixable. The bigger issue was the way the original pictures were tagged. The issue was that
+          the original dataset had lots and lots of points in very close proximity and it made the triangles very oblong.
+          This is a problem I hope to solve in the next section.
+        </p>
+        <p>
+          Below is an extrapolation of me from my original shape to the extreme of the dataset. It's mean to represent
+          a caricature of a population.
+        </p>
+        <img class="center" src="assets/imgs/caracture.jpg" alt="transformed">
+
+      </div>
+    </div>
+        <div class="row w-100 justify-content-center pt-5" id="overview">
+    <div class="col-6 text-center">
+      <h1>Bells and Whistles: Auto tagging</h1>
+      <p>
+        For part one of this project, I had to manually define analogous points on two diffrent photos and I did not
+        do a very good just. It looks fine but it took 4 tries and it still isn't perfect. In part two I had to use
+        some terrible tagging from a dataset I found because I wasn't about to do it all manually the way I wanted
+        it done. Now I how to solve these problems with machine learning and auto tagging.
+      </p>
+      <p>
+        I decided I wanted a program where all I would have to do is give it two pictures and it would merge
+        them like in part one for me. This involves finding the face in both the pictures and then defining the
+        corresponding points. Using the combination of an object localization algorithm and some pretrained facial
+        feature detectors I was able to build just that.
+      </p>
+      <img class="center" src="assets/imgs/automerge.gif" alt="transformed">
+      <p>
+        The whole generation of the above gif was completely automated. I think it actually did a better job defining
+        the points than I did. Note how smooth the transition between frames is.
+      </p>
+
+      <p>
+        The program first localizes the face in the picture and crops it in a uniform was such that the image is just
+        the face. Once the face location is detected, a second algorithm is run on the area where we defined the face
+        to be and the features are located.
+      </p>
+      <div class="row my-3 my-3 mx-auto">
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/face_detect.jpg">
+        </div>
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/feature_detect.jpg">
+        </div>
+      </div>
+      <p>
+        After this, we crop the image and run the same triangulation and merge algorithm as used in the previous parts and get out final
+        result.
+      </p>
+    </div>
+
+  </div>
+
+</html>

@@ -1,0 +1,277 @@
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-157519291-1');
+    </script>
+
+    <title>CS194 Project @</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <style>
+      img.resize {
+        width:625px;
+        height:125px;
+      }
+      .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 80%;
+      }
+      .pd {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
+      }
+      .fade-container {
+        position: relative;
+      }
+
+      .fade-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      
+      .fade-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .5s ease;
+        background-color: rgba(177, 250, 250, 0.904);
+      }
+      
+      .fade-container:hover .fade-overlay {
+        opacity: 1;
+      }
+      
+      .fade-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+    </style>
+
+  </head>
+  <body class="w-100">
+  <!-- Title -->
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Image rectification and panoramas</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>McClain Thiel, CS194 Spring 2020</h4>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 1</h1>
+        <p>
+         This project will eventually be about automatically stitching panoramas together but for now we are just trying
+          to compute the homographies by hand. A homography is a 3x3 matrix that can sort of map equivalent points from
+          one photo to another. It's calculated in the following way:
+          First start with image correspondences, points that are the same in the real world but not the same
+          pixel wise in the photo. You will need 8 points to compute a progressive transformation which is what we need.
+          Stack them into a matrix like this:
+          $$
+          p_i = \begin{bmatrix}
+          -x_i \quad -y_i \quad -1 \quad 0 \quad 0 \quad 0 \quad x_ix_i' \quad y_ix_i' \quad x_i' \\
+          0 \quad 0 \quad 0 \quad -x_i \quad -y_i \quad -1 \quad x_iy_i' \quad y_iy_i' \quad y_i'
+          \end{bmatrix}
+          $$
+
+          we then stack 4 of these to the the $$PH =0 $$ matrix where H is the homography we want and P is our matrix
+          of points.
+
+          $$
+          PH = \begin{bmatrix}
+          -x_1 \quad -y_1 \quad -1 \quad 0 \quad 0 \quad 0 \quad x_1x_1' \quad y_1x_1' \quad x_1' \\
+          0 \quad 0 \quad 0 \quad -x_1 \quad -y_1 \quad -1 \quad x_1y_1' \quad y_1y_1' \quad y_1' \\
+          -x_2 \quad -y_2 \quad -1 \quad 0 \quad 0 \quad 0 \quad x_2x_2' \quad y_2x_2' \quad x_2' \\
+          0 \quad 0 \quad 0 \quad -x_2 \quad -y_2 \quad -1 \quad x_2y_2' \quad y_2y_2' \quad y_2' \\
+          -x_3 \quad -y_3 \quad -1 \quad 0 \quad 0 \quad 0 \quad x_3x_3' \quad y_3x_3' \quad x_3' \\
+          0 \quad 0 \quad 0 \quad -x_3 \quad -y_3 \quad -1 \quad x_3y_3' \quad y_3y_3' \quad y_3' \\
+          -x_4 \quad -y_4 \quad -1 \quad 0 \quad 0 \quad 0 \quad x_4x_4' \quad y_4x_4' \quad x_4' \\
+          0 \quad 0 \quad 0 \quad -x_4 \quad -y_4 \quad -1 \quad x_4y_4' \quad y_4y_4' \quad y_4' \\
+          \end{bmatrix} \begin{bmatrix}h1 \\ h2 \\ h3 \\ h4 \\ h5 \\ h6 \\ h7 \\ h8 \\h9 \end{bmatrix} = 0
+          $$
+
+          We add the constraint that the absolute value of H must be 1 and then use SVD so that $$P = USV^T$$.
+          The last single value of V is the solution to H.
+
+          From we can compute any point's corresponding point via
+
+          $$
+          \begin{bmatrix}
+          x' / \lambda \\
+          y' / \lambda \\
+          \lambda
+          \end{bmatrix} =
+          \begin{bmatrix}
+          h_{11} & h_{12} & h_{13} \\
+          h_{21} & h_{22} & h_{23} \\
+          h_{31} & h_{32} & h_{33}
+          \end{bmatrix}.
+          \begin{bmatrix}
+          x \\
+          y \\
+          1
+          \end{bmatrix}
+          $$
+
+          Credit: <a href="https://math.stackexchange.com/questions/494238/how-to-compute-homography-matrix-h-from-corresponding-points-2d-2d-planar-homog">This</a>
+          post for both explaining math and not making me write that god awful latex code.
+        </p>
+
+        <p>
+          This allows us to transform images like this:
+        </p>
+
+        <img class="center" src="assets/imgs/TransformationsDifference.jpg" alt="me annotaed">
+
+
+        <p>
+          As you can see this kind of looks like we are changing our perspective on the object. Which brings us to
+          our next challenge. Image rectification.
+        </p>
+
+        <p>
+          <a href="https://en.wikipedia.org/wiki/Image_rectification">Image rectification</a> is a transformation
+          process used to project images onto a common image plane. This process has several degrees of freedom and
+          there are many strategies for transforming images to the common plane. (this was copied from the link
+          provided because im getting lazy)
+        </p>
+
+        <p>
+          I'm going to use this amazing technology and math to make this picture of this weird serving tray thing
+          look like I took it at a different angle.
+
+        </p>
+        <img class="center" src="assets/imgs/square_thing%20copy.jpg" alt="idk what the hell this is">
+
+        <p>
+           Basically we apply the homography transformation from above to every pixel and move it to a new canvas.
+          The homography is computed on the edges of the thing from the first photo and a set of coordinates I know to be
+          square in the second image.If the canvas has holes in it we use bilinear interpolation to guess what should be there. If there's too many
+          we blur and then down sample. Just like that we can magically make it look like I took this picture
+         </p>
+        <img class="center" src="assets/imgs/rectified.jpg" alt="idk what the hell this is">
+
+
+        <h3>
+          Stringing Images Together
+        </h3>
+        <p>
+          The next step in this whole process is attaching two images like you might when making a panorama. I'm
+          currently quarantined so I apologize for these images being kinda lame. Here's two pictures of my backyard
+          that I'm gonna try to string together.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/backyard_1%20copy.JPG">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/backyard_2%20copy.JPG">
+          </div>
+        </div>
+        <p>
+          Anyway here's that. I did a bad job defining corrospondances but I'm gonna find a work around for the next part.
+        </p>
+        <img class="center" src="assets/imgs/aligned.jpg" alt="midway">
+
+    </div>
+        <div class="row w-100 justify-content-center pt-5" id="overview">
+            <div class="col-6 text-center">
+                <h1>Part 2</h1>
+                <p>
+                    In this part I'm going to mostly automate this process. The main issue with the previous part
+                    was the fact that I have to manually define corresponding points, which is of course subject
+                    to human error and inconsistency.  I collect the points by finding all the harris edge points.
+                </p>
+                <img class="center" src="assets/imgs/harris_corrners.jpg" alt="idk what the hell this is">
+                <p>
+                    This is just the result of a simple algorithm that finds all the 'corners' as defined by a
+                    threshold value. This is out of scope because I didn't have to implement this.
+                </p>
+                <p>
+                    Obviously, there are too many points to actually use so we need to whittle these down a bit. I use
+                    adaptive non-maximal suppression (ANMS) for this. It basically works by suppressing every point except
+                    the most powerful in a radius that expands outward. The minimum suppression radius is:
+                    $$ r_i = min_j |x_i - x_j|, s.s. f(x_i) < c_{robust} \cdot f(x_j), x_j \in I$$
+                    This just says that the suppression radius is the shortest distance to another point with a significantly
+                    stronger corner strength. What is 'significant' is determined by a tunable parameter. After ANMS is run,
+                    we get the following:
+                </p>
+                <img class="center" src="assets/imgs/ANMS_pts.jpg" alt="idk what the hell this is">
+
+                <p>
+                    The next step is to find and match the features of the two pictures. This is done by feature extraction
+                    and matching. Extraction is just going to every point and taking a 8x8 patch of pixels around it. That's
+                    a 'feature'. It allows us to compare the area around each suggested point by comparing the surroundings.
+                </p>
+                <p>
+                    Next, We have to match the points. This is done by just comparing the feature patches of the first image,
+                    to that of the second. Similar patches are considered similar corresponding points and then used in the
+                    computation of the homography.
+                </p>
+                <p>
+                    We only need 4 pairs of points to compute this homography, but we still have around 200 at this point.
+                    We need to select which 4 are the best. For this we use an algorithm called RANSAC. RANSAC is short for
+                    RANdom SAmple Consensus. It is designed to work on data that has a large number of outliers that are
+                    randomly distributed. I found the best set of 4 points by sampling 4 corresponding points 1000 times,
+                    and computing a homography based on these points then summing up the distance of the points in the first
+                    image to the corresponding image in the second. I kept track of the set with the lowest sum total and
+                    used those 4 to compute the homography.
+                </p>
+                <p>
+                    After that I just ran the warpping algorithm on the images and then combined them. I switched to the
+                    office panorama set because it's easier to see if its working but it should work on the beach set
+                    from above as well.
+                </p>
+                <img class="center" src="assets/imgs/stitched1.jpg" alt="idk what the hell this is">
+                <img class="center" src="assets/imgs/stitched2%20copy.jpg" alt="idk what the hell this is">
+                <p>
+                    I just combined these on a large canvas and didn't bother to rectify or crop them because I'm working
+                    on another project that I'm running late for but if I wanted this to look like a real panorama I would
+                    transform the set back to a rectangle and crop and it should look good.
+                </p>
+
+
+
+            </div>
+            <p>
+            Note: I hope I made this clear but none of the conceptual work here is my own. This is all taken from
+            the  <a href="http://cs.brown.edu/courses/csci1950-g/asgn/proj6/resources/ImageMatching.pdf"> Brown paper</a>
+            on image stitching.
+            </p>
+        </div>
+
+
+  </div>
+  <!-- Bootstrap JS -->
+  <script src="assets/jquery-3.4.1.slim.min.js"></script>
+  <script src="assets/popper.min.js"></script>
+  <script src="assets/bootstrap.min.js"></script>
+  <!-- MathJax -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </body>
+
+</html>

@@ -1,0 +1,465 @@
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-157519291-1');
+    </script>
+
+    <title>CS194 Project @</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <style>
+      img.resize {
+        width:625px;
+        height:125px;
+      }
+      .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
+      }
+      .fade-container {
+        position: relative;
+      }
+
+      .fade-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      
+      .fade-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .5s ease;
+        background-color: rgba(177, 250, 250, 0.904);
+      }
+      
+      .fade-container:hover .fade-overlay {
+        opacity: 1;
+      }
+      
+      .fade-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+    </style>
+
+  </head>
+  <body class="w-100">
+  <!-- Title -->
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Fun with Filters and Frequencies</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>McClain Thiel, CS194 Spring 2020</h4>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 1.1: Finite Difference Operator</h1>
+        <p>
+          The first part of this project involves taking the image of the camera man below and breaking it into it's
+          vertical and horizontal components. This is done by convolving the image with the following filters.
+        </p>
+
+        <div class="row w-75 w-75 justify-content-center">
+          <div class="col-4 my-auto"></div>
+          <div class="col-4 my-auto">
+            <img class="w-100" src="assets/imgs/camman.png">
+          </div>
+          <div class="col-4 my-auto">
+            <p> $$D_x = [1, -1] $$</p>
+            <p> $$D_y =
+              \left[
+              \begin{array}{c}
+              1 \\
+              -1 \\
+              \end{array}
+              \right]
+              $$</p>
+          </div>
+        </div>
+
+        <p>
+          This convolution yielded the following results. They show the changes in the horizontal and vertical direction
+          respectively. This effect is viable if you look closely at the images below.
+        </p>
+
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/y_partial.png">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/x_partial.png">
+          </div>
+        </div>
+
+        <p>
+          When these two images are combined, the result is called the gradient magnitude image. At a high level
+          this shows the harshest changes in gradient which yields the highest values at the place in the image where
+          there is an edge. By forcing every value to ether 0 or 1 using a variant threshold, the two filters can
+          act as an edge detector as shown in the second image.
+        </p>
+
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/gradient.png">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/binary_gradient.png">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-center">
+        <h1>Part 1.2: Derivative of Gaussian filter</h1>
+        <p>
+          As you can see from the image above, the edge detector is pretty noisy. This is because the gradient at
+          points that don't have edges can be very high due to small variations at the pixel level. For example,
+          in the original picture, the sky all looks roughly the same color and you defiantly wouldn't say that it
+          has any 'edges' but small color fluctuations and artifacts produce large gradients and therefore make the noise
+          in the edge detector above. Fortunately, this has a pretty simple solution. If we run a gaussian filter over the
+          original image before we take the gradient it blurs it and  we get much better results.
+        </p>
+
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/gauss2.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/edge.png">
+          </div>
+        </div>
+
+        <p>
+          Above is a visualization of a gaussian which produces the original blur and the final edge detection product.
+          These operations can be combined into one operation via the derivative property of convolution which says
+        </p>
+        <p>$$\frac{\partial}{\partial x} (h * f) =  (\frac{\partial }{\partial x} h) * f $$</p>
+
+        <p> So instead of running multiple filters over the same image and combining them, we run a single
+        derivative of gaussian filter over the entire image and it produces the edges.</p>
+
+      </div>
+    </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+    <div class="col-6 text-center">
+      <h1>Part 1.3: Image Straightening </h1>
+      <p>
+        We can also use these gradients to automatically straighten images. The partial derivatives show the slants
+        of the edges in the picture. We know that statistically images should have mostly vertical or horizontal lines.
+        I've been told that gravity is somehow responsible for this but honestly I have no idea what that means or even
+        if 'gravity' is referring to the same thing I'm thinking of. Regardless, we can use the statistics to auto
+        straighten images. We can use the gradient angle
+      </p>
+
+      <p>Gradient angle: $$(\theta) = tan^{-1} \frac{g_y}{g_x} $$</p>
+
+      <p>
+        to correct for rotated images. The idea is that the gradient angle should average to 0 so we can write a loss
+        function that penalizes deviations from what is expected.
+      </p>
+
+      <p>
+         $$ loss =  \sum_i (g_{x_i} - E[g_x])^2 + (g_{y_i} - E[g_y])^2$$
+      </p>
+      <p>
+        However, because the expected value for horizontal lines is 0, this simplifies to  $$ loss =  \sum_i (g_{x_i})^2 + (g_{y_i} - |1.5|)^2$$
+      </p>
+
+      <p>
+        My original method didn't incorporate the vertical component because I felt it was redundant. I think that if we maximize
+        for horizontal lines, we dont need to also maximize for vertical because statistically there should be similar
+        numbers of the two. Obviously, because they are perpendicular, correcting for one automatically corrects for the
+        other. This ended up working well for some images but completely failed on some image so I reintegrated the vertical
+        component in the loss function.
+      </p>
+      <p>
+        This effect can be visualized via a histogram. Below is a correctly oriented image, and its histogram of
+        gradients. You can see that the highest frequency value is 0 and other high frequency values correspond to
+        vertical (edges) and diagonal lines (high points near 1 and -1 ) while all values between are relatively small.
+      </p>
+
+      <div class="row my-3 my-3 mx-auto">
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/1_img.png">
+        </div>
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/0.png">
+        </div>
+      </div>
+
+      <p>
+        Now compare this to an image which is poorly rotated. The largest values are still at the points we expect, but
+        now the other values are larger. The variance of the frequencies is higher and the distribution is more uniform.
+        The bump in the histogram around .4 corresponds to in increased number of lines moving that direction. In this
+        case, about 20 degrees (the rotation).
+      </p>
+      <div class="row my-3 my-3 mx-auto">
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/8_img.png">
+        </div>
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/8.png">
+        </div>
+      </div>
+
+      <p> This image was chosen because it is pretty much entirely clean vertical and horizontal lines. Now lets try
+      it with a real picture. </p>
+
+      <div class="row my-3 my-3 mx-auto">
+      <div class="col-6 my-auto">
+        <img class="w-100" src="assets/imgs/straight.jpg">
+      </div>
+      <div class="col-6 my-auto">
+        <img class="w-100" src="assets/imgs/bad_hist.jpg">
+      </div>
+    </div>
+      <div class="row my-3 my-3 mx-auto">
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/good_rot.jpg">
+        </div>
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/good_hist.jpg">
+        </div>
+      </div>
+
+      <p>
+        As you can see, the histograms are a bit harder to decipher when the image is more complex.
+        Below are a bunch of straightened images.
+      </p>
+
+      <div class="row my-3 my-3 mx-auto">
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/rotations1.jpg">
+        </div>
+        <div class="col-6 my-auto">
+          <img class="w-100" src="assets/imgs/rotations2.jpg">
+        </div>
+        <p>
+          Sometimes it does a bad job. If you look above, the image of the street looks somewhat weird. I'm
+          not sure but I believe this happens because the image has a bunch of strange edges. The trees and the
+          horizon are far from straight edges and I think that because I used a weird unweighted parameters, the
+          function has a hard time figuring out what aspects are significant.
+        </p>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="approach">
+      <div class="col-6 text-center">
+        <h1>2.1 Image sharpening</h1>
+        <p>
+          In a previous section I talked briefly about high pass filtering and high vs low frequency images. Now I will
+          describe how to use this to 'sharpen' an image. For those line me who don't know anything about photography,
+          sharpening an image means basically making the edges harder. Effectively the opposite of blurring. We can
+          accomplish this computationally by just tuning up the high frequency parts of the image.
+        </p>
+        <p>
+          $$ sharpened = C \cdot hf(original) + lf(original)$$
+        </p>
+        <p>
+         where hf is a high frequency filter and lf is a low frequency function. This basically means blurring
+          the image for the low pass and subtracting the blurred image from the original to get the high pass.
+          The C is just an adjustable constant that controls how sharp the image is.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/not_sharpened.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/sharpened.jpg">
+          </div>
+      </div>
+        <p>
+          Here that is again with a new image:
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/blurry_dog.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/sharp_dog.jpg">
+          </div>
+        </div>
+    </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="edgy">
+      <div class="col-6 text-center">
+        <h1>2.2 Hybrid Images</h1>
+        <p>
+          A hybrid image is an image that looks different at different distances. This is possible because we perceive
+          high frequencies at close distances and low frequencies at larger distances. So if we strip the high frequency
+          part of one image and add it to on top of the low frequency of a separate image it makes an image that
+          looks different at different distance. We start with a classic.
+        </p>
+        <div class="row w-100 mx-auto my-3">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/DerekPicture.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/nutmeg.jpg">
+          </div>
+        </div>
+        <p>
+          I first align these images manually and then take the high pass of the cat and put it over the low pass
+          of Derek. These are the results.
+        </p>
+            <img src="assets/imgs/hybrid_test.jpg" alt="hybrid_test" class="center">
+        <p>
+          Once you figure out the balance of high vs low frequency, the only hard part is aligning the images. This is
+          surprisingly hard as it has to be done manually and requires an artistic eye. Anyway, here are some other
+          hybrid images I made.
+        </p>
+        <div class="row w-100 mx-auto my-3">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/pav_beav.jpg">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/einstien_monroe.jpg">
+          </div>
+        </div>
+        <p>
+          If you are having trouble seeing both images, try zooming in or out or moving away from the screen.
+        </p>
+        <img src="assets/imgs/camp_ben.jpg" alt="hybrid_test2" class="center">
+        <p>
+          Obviously, some look a lot better than others.
+        </p>
+      </div>
+    </div>
+
+      <div class="row w-100 justify-content-center pt-5" id="edgy">
+        <div class="col-6 text-center">
+          <h1> 2.3 Gaussian and Laplacian Stacks</h1>
+          <p>
+           Gaussian and Laplacian stacks are pretty simple. They are really just an image that is duplicated a few times,
+            and each layer is filtered with a more sever gaussian. This really just means its the same image blurred more,
+            and more each time. Laplacian stacks are the same but with a high pass filter instead. They are used to analyze
+            images with high and low frequency components.
+          </p>
+          <img src="assets/imgs/dali.jpg" alt="lincion" class="center">
+
+          <p>
+            The image above is by Dali and is called 'Gala Contemplating the Mediterranean Sea which at a distance of 20
+            meters is transformed into the portrait of Abraham Lincoln'. As the title suggests, this picture has two
+            distance sets of frequencies. We can use Gaussian and Laplacian Stacks to analyse this.
+
+          </p>
+
+          <p>
+            Here is the Gaussian stack of the image. As you can see, the more blurred it gets, the more it looks
+            like Abraham Lincoln and the less it looks like Gala.
+          </p>
+          <img class="resize" src="assets/imgs/gaussian_stack.jpg" alt="gaussian_stack">
+          <p>
+            Each image to the right is more blurred than the one to its left. This allows you to see both the original
+            image and the low frequency image from the same distance.
+          </p>
+          <p>
+            Here is the same image but with a Laplacian stack. This allows you to see the high frequency images.
+          </p>
+          <img class="resize" src="assets/imgs/laplacian_stack.jpg" alt="Laplacian_stack">
+        </div>
+      </div>
+
+      <div class="row w-100 justify-content-center pt-5" id="edgy">
+        <div class="col-6 text-center">
+          <h1> 2.4: Multiresolution Blending </h1>
+          <p>
+            Multiresolution blending is a way to blend images in a way that makes it really hard to tell where one
+            image ends and the next begins. It does this by progressively blending at each frequency level. In
+            practice, this is done by computing pyramids for the two images and then combining them at each level.
+            The equation for the final blended image is:
+
+          </p>
+          <p>
+            $$LS(i,j) = GR(i,j) \cdot LA(i,j) + (1-GR(i,j)) \cdot LB(i,j) $$
+          </p>
+
+          <p>
+            Where GR is a gaussian stack of the mask and (1-GR) is its inverse. LA is a Laplacian stack of the first
+            image and LB is the Laplacian of the second image. After the Laplacians, we also add a gaussian to the
+            bottom of the stack which is also weighted by the mask. The stacks are displayed below for visualization purposes.
+          </p>
+          <img class="resize" src="assets/imgs/orange_stack.jpg" alt="Laplacian_stack">
+          <img class="resize" src="assets/imgs/apple_stack.jpg" alt="Laplacian_stack">
+
+          <p>
+            Finally, we can just take the sum of these stacks and normalize to get our final blended image.
+            Behold! the orple!
+          </p>
+          <img class="center" src="assets/imgs/orple.jpg" alt="gaussian_stack">
+          <p>
+            The shape of the mask is what controls where the images are blended. Using this, we can make some cool
+            pictures.
+          </p>
+          <p>
+            Here is the same image but with a Laplacian stack. This allows you to see the high frequency images.
+          </p>
+
+          <div class="row w-100 mx-auto my-3">
+            <div class="col-6 my-auto">
+              <img class="w-100" src="assets/imgs/star+earth.jpg">
+            </div>
+            <div class="col-6 my-auto">
+              <img class="w-100" src="assets/imgs/stat_earth.jpg">
+            </div>
+          </div>
+          <p>
+            Here's a cool result of using an irregular mask with the image of an eye and some nebula.
+          </p>
+          <img class="center" src="assets/imgs/gal_eye.jpg" alt="gaussian_stack">
+          <p>
+            Because of the normalization process, a lot of these images look sort of washed out. I plan to work on that
+            and hopefully update this with better results.
+          </p>
+
+          <div class="row w-100 mx-auto my-3">
+            <div class="col-6 my-auto">
+              <p>
+              </p>
+            </div>
+            <div class="col-6 my-auto">
+              <p>
+              </p>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+
+
+    <!-- Bootstrap JS -->
+    <script src="assets/jquery-3.4.1.slim.min.js"></script>
+    <script src="assets/popper.min.js"></script>
+    <script src="assets/bootstrap.min.js"></script>
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </body>
+</html>

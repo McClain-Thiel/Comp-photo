@@ -1,0 +1,212 @@
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+      <script async src="assets/idk_js.js"></script>
+    <link href="assets/idk_css.css" rel="stylesheet">
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <title>Robust CV</title>
+  </head>
+
+
+
+  <body class="w-100">
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Robust Computer vision</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>Dante Everaert, McClain Thiel, Greg Yannett</h4>
+        <h5>For CS182: Designing, Visualizing and Understanding Deep Neural Networks </h5>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Background</h2>
+        <p>
+            Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+            has had a major impact on many industries and the consensus is that it will continue to disrupt and
+            revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+            superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+            leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+            recently, however,  a serious problem has emerged. Look at the following example:
+            <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+            To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+            neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+            more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+            'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+            something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+            the same way, they look at features that aren't necessarily salient to the task but allow the model to
+            pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+            human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+            advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+            also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+            the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+            affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+            a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+        <p>
+          This allows us to transform images like this:
+        </p>
+
+        <img class="center" src="assets/imgs/TransformationsDifference.jpg" alt="me annotaed">
+
+
+        <p>
+          As you can see this kind of looks like we are changing our perspective on the object. Which brings us to
+          our next challenge. Image rectification.
+        </p>
+
+        <p>
+          <a href="https://en.wikipedia.org/wiki/Image_rectification">Image rectification</a> is a transformation
+          process used to project images onto a common image plane. This process has several degrees of freedom and
+          there are many strategies for transforming images to the common plane. (this was copied from the link
+          provided because im getting lazy)
+        </p>
+
+        <p>
+          I'm going to use this amazing technology and math to make this picture of this weird serving tray thing
+          look like I took it at a different angle.
+
+        </p>
+        <img class="center" src="assets/imgs/square_thing%20copy.jpg" alt="idk what the hell this is">
+
+        <p>
+           Basically we apply the homography transformation from above to every pixel and move it to a new canvas.
+          The homography is computed on the edges of the thing from the first photo and a set of coordinates I know to be
+          square in the second image.If the canvas has holes in it we use bilinear interpolation to guess what should be there. If there's too many
+          we blur and then down sample. Just like that we can magically make it look like I took this picture
+         </p>
+        <img class="center" src="assets/imgs/rectified.jpg" alt="idk what the hell this is">
+
+
+        <h3>
+          Stringing Images Together
+        </h3>
+        <p>
+          The next step in this whole process is attaching two images like you might when making a panorama. I'm
+          currently quarantined so I apologize for these images being kinda lame. Here's two pictures of my backyard
+          that I'm gonna try to string together.
+        </p>
+        <div class="row my-3 my-3 mx-auto">
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/backyard_1%20copy.JPG">
+          </div>
+          <div class="col-6 my-auto">
+            <img class="w-100" src="assets/imgs/backyard_2%20copy.JPG">
+          </div>
+        </div>
+        <p>
+          Anyway here's that. I did a bad job defining corrospondances but I'm gonna find a work around for the next part.
+        </p>
+        <img class="center" src="assets/imgs/aligned.jpg" alt="midway">
+
+    </div>
+        <div class="row w-100 justify-content-center pt-5" id="overview">
+            <div class="col-6 text-center">
+                <h1>Part 2</h1>
+                <p>
+                    In this part I'm going to mostly automate this process. The main issue with the previous part
+                    was the fact that I have to manually define corresponding points, which is of course subject
+                    to human error and inconsistency.  I collect the points by finding all the harris edge points.
+                </p>
+                <img class="center" src="assets/imgs/harris_corrners.jpg" alt="idk what the hell this is">
+                <p>
+                    This is just the result of a simple algorithm that finds all the 'corners' as defined by a
+                    threshold value. This is out of scope because I didn't have to implement this.
+                </p>
+                <p>
+                    Obviously, there are too many points to actually use so we need to whittle these down a bit. I use
+                    adaptive non-maximal suppression (ANMS) for this. It basically works by suppressing every point except
+                    the most powerful in a radius that expands outward. The minimum suppression radius is:
+                    $$ r_i = min_j |x_i - x_j|, s.s. f(x_i) < c_{robust} \cdot f(x_j), x_j \in I$$
+                    This just says that the suppression radius is the shortest distance to another point with a significantly
+                    stronger corner strength. What is 'significant' is determined by a tunable parameter. After ANMS is run,
+                    we get the following:
+                </p>
+                <img class="center" src="assets/imgs/ANMS_pts.jpg" alt="idk what the hell this is">
+
+                <p>
+                    The next step is to find and match the features of the two pictures. This is done by feature extraction
+                    and matching. Extraction is just going to every point and taking a 8x8 patch of pixels around it. That's
+                    a 'feature'. It allows us to compare the area around each suggested point by comparing the surroundings.
+                </p>
+                <p>
+                    Next, We have to match the points. This is done by just comparing the feature patches of the first image,
+                    to that of the second. Similar patches are considered similar corresponding points and then used in the
+                    computation of the homography.
+                </p>
+                <p>
+                    We only need 4 pairs of points to compute this homography, but we still have around 200 at this point.
+                    We need to select which 4 are the best. For this we use an algorithm called RANSAC. RANSAC is short for
+                    RANdom SAmple Consensus. It is designed to work on data that has a large number of outliers that are
+                    randomly distributed. I found the best set of 4 points by sampling 4 corresponding points 1000 times,
+                    and computing a homography based on these points then summing up the distance of the points in the first
+                    image to the corresponding image in the second. I kept track of the set with the lowest sum total and
+                    used those 4 to compute the homography.
+                </p>
+                <p>
+                    After that I just ran the warpping algorithm on the images and then combined them. I switched to the
+                    office panorama set because it's easier to see if its working but it should work on the beach set
+                    from above as well.
+                </p>
+                <img class="center" src="assets/imgs/stitched1.jpg" alt="idk what the hell this is">
+                <img class="center" src="assets/imgs/stitched2%20copy.jpg" alt="idk what the hell this is">
+                <p>
+                    I just combined these on a large canvas and didn't bother to rectify or crop them because I'm working
+                    on another project that I'm running late for but if I wanted this to look like a real panorama I would
+                    transform the set back to a rectangle and crop and it should look good.
+                </p>
+
+
+
+            </div>
+            <p>
+            Note: I hope I made this clear but none of the conceptual work here is my own. This is all taken from
+            the  <a href="http://cs.brown.edu/courses/csci1950-g/asgn/proj6/resources/ImageMatching.pdf"> Brown paper</a>
+            on image stitching.
+            </p>
+        </div>
+
+
+  </div>
+  <!-- Bootstrap JS -->
+  <script src="assets/jquery-3.4.1.slim.min.js"></script>
+  <script src="assets/popper.min.js"></script>
+  <script src="assets/bootstrap.min.js"></script>
+  <!-- MathJax -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </body>
+
+</html>
