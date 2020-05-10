@@ -1,6 +1,8 @@
-*.jpg
+*.iml
 *.png
 *.h5
 *.asf
 *.pts
 *.jpeg
+*.xml
+*/.idea
