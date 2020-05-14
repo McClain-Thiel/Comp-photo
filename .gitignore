@@ -6,3 +6,6 @@
 *.jpeg
 *.xml
 */.idea
+target/
+final/tracker/
+final/age-gender-classification/processed-imdb-wiki-dataset-master/wiki/

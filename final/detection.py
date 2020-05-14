@@ -6,12 +6,13 @@ import importlib.util
 import pandas as pd
 from imutils import face_utils
 import dlib
+import class_details
 
 
 
 class TargetStream():
 
-    def __init__(self, target_class, interpreter, output_shape=(300,300)):
+    def __init__(self, target_class, interpreter, classifier=None, output_shape=(300,300)):
         # setting up video capture/ recognition functionality
         self.stream = cv2.VideoCapture(0)
         self.exp_output_shape = output_shape
@@ -42,6 +43,9 @@ class TargetStream():
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor('model/face_landmarks.dat')
         self.target_distance_away = 0
+        self.scaling_factor = 0
+        self.classifier = classifier
+        self.pred_class = None
 
     def update(self, verbose=False):
         """
@@ -83,7 +87,21 @@ class TargetStream():
                     lower, upper= self.draw_box(best_loc)
                     self.target_corners = (lower, upper)
 
-            self.find_face()
+            face = self.find_face()
+
+            if self.face_detected:
+                data = face - face.mean(axis=0)
+                data = data.reshape((1, 68, 2)).astype(np.float32)
+                data = tf.convert_to_tensor(data, np.float32)
+
+                # use model
+                input_details = self.classifier.get_input_details()
+                output_details = self.classifier.get_output_details()
+
+                self.classifier.set_tensor(input_details[0]['index'], data)
+                self.classifier.invoke()
+
+                self.pred_class = class_details.class_index[np.argmax(self.classifier.get_tensor(output_details[0]['index']))]
 
             if self.face_detected:
                 self.find_dist()
@@ -171,7 +189,7 @@ class TargetStream():
             shape = self.predictor(gray, rects[0])
             shape = face_utils.shape_to_np(shape)
             self.face = shape
-            return
+            return shape
 
     def find_eyes(self):
         """
@@ -199,11 +217,13 @@ class TargetStream():
         if not self.face_detected:
             return
         l, r  = self.find_eyes()
+
         right_eye_mid = r.mean(axis=0).reshape((1, 2)).astype(int)
         left_eye_mid = l.mean(axis=0).reshape((1, 2)).astype(int)
         eye_dist = np.linalg.norm(left_eye_mid-right_eye_mid) #in pixels
-        pixels_per_inch = eye_dist / 2.55906 #constant for rough distance between eyes
-        dist = (2.55906 * self.focal_length) / pixels_per_inch
+        class_info = self.get_class_attributes()
+        self.scaling_factor = eye_dist / class_info['eye_dist']
+        dist = (2.55906 * self.focal_length) / self.scaling_factor
         self.target_distance_away = round(dist / 12, 2)
         return
 
@@ -239,34 +259,114 @@ class TargetStream():
         """
         return self.target_distance_away
 
+    def get_class_attributes(self):
+        """
+        this function classifies the target and classifies them as one of 4 classes, then
+        returns the expected class attributes in the form of a dict. I plan to add more
+        attributes in the future.
+        :return: dict - { "eye_dist": float}
+        """
+        return class_details.class_data[self.pred_class]
+
+    def demo(self, mode):
+        """
+        this function shows a video that walks the viewer through the steps of
+        the calculation.
+        :return: None
+        """
+        prep_frame = self.frame
+        if cv2.waitKey(1) == ord('q'):
+            self.stop()
+            return
+
+        elif mode == "detection":
+            if self.target_location:
+                string = "Target Midpoint Location in 2D is:  " + str(self.target_location)
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+            else:
+                string = "Cannot find: " + self.target_class
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+
+            if self.object_detected:
+                cv2.rectangle(prep_frame, self.target_corners[0], self.target_corners[1], (10, 255, 0), 2)
+
+        elif mode == "face":
+            if self.face_detected:
+                string = "Extracting facial landmarks:  " + str(self.target_location)
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+            else:
+                string = "Cannot find: " + self.target_class
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+
+            if self.face_detected:
+                for (x, y) in self.face:
+                    cv2.circle(prep_frame, (x, y), 1, (0, 0, 255), -1)
+
+        elif mode == "classification":
+            if self.face_detected:
+                info = self.get_class_attributes()
+                string = "Predicted Class is:  " + str(info['name'])
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+            else:
+                string = "Cannot find: " + self.target_class
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+
+        elif mode == "dist":
+            if self.face_detected:
+                arr = self.plot_eyes()
+                for (x, y) in arr:
+                    cv2.circle(prep_frame, (x, y), 1, (0, 0, 255), -1)
+                string = "Target Distance from camera: " + str(self.target_distance_away) + "ft"
+                cv2.putText(self.frame, string, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+
+        else:
+            print("Unknown mode")
+
+        cv2.imshow('Demo', prep_frame)
+
 
 # import the correct version of tensorflow based on whats installed and define and interpreter
 # from on the .tflite file
 if importlib.util.find_spec('tflite_runtime'):
     import tflite_runtime.interpreter as tflite
     interpreter = tflite.Interpreter(model_path='model/detect.tflite')
+    classifier = tflite.Interpreter(model_path='model/gender_model.tflite')
 else:
     import tensorflow as tf
     interpreter = tf.lite.Interpreter(model_path='model/detect.tflite')
+    classifier = tf.lite.Interpreter(model_path='model/gender_model.tflite')
 
 interpreter.allocate_tensors()
+classifier.allocate_tensors()
 
 #load labels
 with open('model/labelmap.txt', 'r') as f:
     labels = [line.strip() for line in f.readlines()]
 
+def run_demo():
+    init, counter, mult = TargetStream('person', interpreter, classifier), 0, 100
+    init.start()
+    while counter < 4*mult:
+        if counter < 1*mult:
+            init.demo('detection')
+        elif counter >= 1*mult and counter < 2*mult:
+            init.demo('face')
+        elif counter >= 2*mult and counter < 3*mult:
+            init.demo('classification')
+        elif counter >= 3*mult and counter < 4*mult:
+            init.demo('dist')
+        time.sleep(.01)
+        counter += 1
 
 def main():
-    init = TargetStream('person', interpreter)
+    init = TargetStream('person', interpreter, classifier)
     init.start()
     while init.active:
         init.show_frame()
-        #print("Target dist: ", init.get_target_dist())
-        time.sleep(.15)
-
+        time.sleep(.005)
 
 if __name__ == "__main__":
     try:
-        main()
+        run_demo()
     except:
         init.stop()
